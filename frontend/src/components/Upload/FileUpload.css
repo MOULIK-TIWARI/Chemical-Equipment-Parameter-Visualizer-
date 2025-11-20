@@ -101,6 +101,19 @@
   margin-bottom: 20px;
 }
 
+/* Success message */
+.success-message {
+  padding: 12px 16px;
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+  border-radius: 6px;
+  color: #52c41a;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
 /* Progress bar */
 .progress-container {
   margin-bottom: 20px;

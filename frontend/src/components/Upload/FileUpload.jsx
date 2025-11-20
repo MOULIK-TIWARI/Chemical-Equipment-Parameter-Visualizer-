@@ -1,12 +1,16 @@
 import React, { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './FileUpload.css'
+import api from '../../services/api'
 
 function FileUpload({ onUploadSuccess }) {
+  const navigate = useNavigate()
   const [selectedFile, setSelectedFile] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const fileInputRef = useRef(null)
 
   // Validate file type (CSV only)
@@ -92,7 +96,7 @@ function FileUpload({ onUploadSuccess }) {
     fileInputRef.current?.click()
   }
 
-  // Handle upload (placeholder for task 12.2)
+  // Handle upload
   const handleUpload = async () => {
     if (!selectedFile) {
       setError('Please select a file first')
@@ -103,30 +107,86 @@ function FileUpload({ onUploadSuccess }) {
     setUploadProgress(0)
     setError('')
 
-    // Simulate upload progress for now
-    // This will be replaced with actual API call in task 12.2
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setIsUploading(false)
-          
-          // Call success callback if provided
-          if (onUploadSuccess) {
-            onUploadSuccess()
-          }
-          
-          return 100
-        }
-        return prev + 10
+    try {
+      // Create FormData with selected file
+      const formData = new FormData()
+      formData.append('file', selectedFile)
+
+      // Call POST /api/datasets/upload/ endpoint
+      const response = await api.post('/datasets/upload/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          // Calculate and update upload progress
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          )
+          setUploadProgress(percentCompleted)
+        },
       })
-    }, 200)
+
+      // Handle success response
+      setIsUploading(false)
+      setUploadProgress(100)
+      
+      // Show success notification
+      const datasetName = response.data.name || selectedFile.name
+      setSuccessMessage(`Successfully uploaded ${datasetName}! Redirecting to dashboard...`)
+      
+      // Call success callback if provided, passing the response data
+      if (onUploadSuccess) {
+        onUploadSuccess(response.data)
+      }
+
+      // Redirect to dashboard with new dataset after a brief delay
+      setTimeout(() => {
+        // Navigate to dashboard, passing the dataset ID in state
+        navigate('/dashboard', { 
+          state: { 
+            datasetId: response.data.id,
+            isNewUpload: true 
+          } 
+        })
+      }, 1500)
+
+    } catch (err) {
+      // Handle error responses
+      setIsUploading(false)
+      setUploadProgress(0)
+
+      // Display validation errors to user
+      if (err.response && err.response.data) {
+        const errorData = err.response.data
+        
+        // Handle different error formats
+        if (errorData.error) {
+          setError(errorData.error)
+        } else if (errorData.message) {
+          setError(errorData.message)
+        } else if (errorData.details) {
+          // Handle detailed validation errors
+          const detailMessages = Object.entries(errorData.details)
+            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('; ')
+          setError(detailMessages || 'Validation error occurred')
+        } else if (typeof errorData === 'string') {
+          setError(errorData)
+        } else {
+          setError('Failed to upload file. Please try again.')
+        }
+      } else {
+        // Use the error message from the interceptor
+        setError(err.message || 'Failed to upload file. Please check your connection and try again.')
+      }
+    }
   }
 
   // Handle clear selection
   const handleClear = () => {
     setSelectedFile(null)
     setError('')
+    setSuccessMessage('')
     setUploadProgress(0)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -179,6 +239,13 @@ function FileUpload({ onUploadSuccess }) {
       {error && (
         <div className="error-message">
           {error}
+        </div>
+      )}
+
+      {/* Success message */}
+      {successMessage && (
+        <div className="success-message">
+          ✓ {successMessage}
         </div>
       )}
 
