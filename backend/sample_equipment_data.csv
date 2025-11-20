@@ -1,0 +1,16 @@
+Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1,Pump,150.5,45.2,85.0
+Reactor-B2,Reactor,200.0,120.5,350.0
+Heat-Exchanger-C3,Heat Exchanger,180.3,30.0,150.5
+Compressor-D4,Compressor,220.8,95.0,120.0
+Pump-A5,Pump,165.2,50.3,90.5
+Reactor-B6,Reactor,195.5,115.0,340.5
+Heat-Exchanger-C7,Heat Exchanger,175.0,28.5,145.0
+Compressor-D8,Compressor,210.5,88.0,115.5
+Pump-A9,Pump,155.0,48.0,87.5
+Reactor-B10,Reactor,205.3,125.0,360.0
+Heat-Exchanger-C11,Heat Exchanger,185.5,32.0,155.0
+Compressor-D12,Compressor,215.0,92.5,118.0
+Pump-A13,Pump,160.8,52.0,92.0
+Reactor-B14,Reactor,198.0,118.5,345.5
+Heat-Exchanger-C15,Heat Exchanger,178.5,29.5,148.5
