@@ -1,0 +1,13 @@
+# Chemical Equipment Analytics Desktop Application Dependencies
+
+# GUI Framework
+PyQt5>=5.15.0
+
+# Data Visualization
+matplotlib>=3.5.0
+
+# HTTP Client for API Communication
+requests>=2.28.0
+
+# Additional utilities
+numpy>=1.21.0
