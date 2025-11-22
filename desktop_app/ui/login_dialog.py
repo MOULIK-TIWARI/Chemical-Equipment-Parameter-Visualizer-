@@ -14,6 +14,16 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QFont
 from services.api_client import NetworkError, AuthenticationError, APIClientError
 
+# Import centralized styles
+try:
+    from ui.styles import STYLES, COLORS, FONTS, RADIUS, SPACING
+except ImportError:
+    STYLES = {}
+    COLORS = {'primary': '#2196F3', 'surface': '#FFFFFF'}
+    FONTS = {'size_large': 14}
+    RADIUS = {'large': 12}
+    SPACING = {'lg': 16}
+
 
 class LoginDialog(QDialog):
     """
@@ -46,53 +56,105 @@ class LoginDialog(QDialog):
         self._connect_signals()
     
     def _init_ui(self):
-        """Initialize the user interface."""
-        self.setWindowTitle("Login - Chemical Equipment Analytics")
+        """Initialize the user interface with modern styling."""
+        self.setWindowTitle("🔐 Login - Chemical Equipment Analytics")
         self.setModal(True)
-        self.setMinimumWidth(400)
+        self.setMinimumWidth(450)
+        self.setMinimumHeight(400)
+        
+        # Apply modern dialog styling
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {COLORS.get('background', '#F5F5F5')};
+            }}
+        """)
         
         # Main layout
         main_layout = QVBoxLayout()
-        main_layout.setSpacing(20)
+        main_layout.setSpacing(24)
+        main_layout.setContentsMargins(32, 32, 32, 32)
         
-        # Title label
-        title_label = QLabel("Chemical Equipment Analytics")
-        title_font = QFont()
-        title_font.setPointSize(14)
-        title_font.setBold(True)
-        title_label.setFont(title_font)
+        # Title label with modern styling
+        title_label = QLabel("🔬 Chemical Equipment Analytics")
+        title_label.setFont(QFont("Segoe UI", 18, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS.get('primary', '#2196F3')};
+                padding: 16px;
+            }}
+        """)
         main_layout.addWidget(title_label)
         
-        # Subtitle label
+        # Subtitle label with modern styling
         subtitle_label = QLabel("Please login to continue")
+        subtitle_label.setFont(QFont("Segoe UI", 11))
         subtitle_label.setAlignment(Qt.AlignCenter)
+        subtitle_label.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS.get('text_secondary', '#757575')};
+                padding-bottom: 8px;
+            }}
+        """)
         main_layout.addWidget(subtitle_label)
         
-        # Login form group
+        # Login form group with modern styling
         form_group = QGroupBox("Login Credentials")
+        form_group.setStyleSheet(f"""
+            QGroupBox {{
+                background-color: {COLORS.get('surface', '#FFFFFF')};
+                border: 1px solid {COLORS.get('border', '#E0E0E0')};
+                border-radius: {RADIUS.get('large', 12)}px;
+                margin-top: 12px;
+                padding-top: 24px;
+                font-size: {FONTS.get('size_medium', 12)}px;
+                font-weight: 600;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 6px 16px;
+                background-color: {COLORS.get('primary', '#2196F3')};
+                color: white;
+                border-radius: {RADIUS.get('small', 4)}px;
+                margin-left: 12px;
+            }}
+        """)
         form_layout = QFormLayout()
-        form_layout.setSpacing(15)
+        form_layout.setSpacing(20)
+        form_layout.setContentsMargins(20, 20, 20, 20)
         
-        # Username field
+        # Username field with modern styling
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Enter your username")
-        self.username_input.setMinimumHeight(30)
-        form_layout.addRow("Username:", self.username_input)
+        self.username_input.setMinimumHeight(40)
+        if STYLES.get('line_edit'):
+            self.username_input.setStyleSheet(STYLES['line_edit'])
+        form_layout.addRow("👤 Username:", self.username_input)
         
-        # Password field
+        # Password field with modern styling
         self.password_input = QLineEdit()
         self.password_input.setPlaceholderText("Enter your password")
         self.password_input.setEchoMode(QLineEdit.Password)
-        self.password_input.setMinimumHeight(30)
-        form_layout.addRow("Password:", self.password_input)
+        self.password_input.setMinimumHeight(40)
+        if STYLES.get('line_edit'):
+            self.password_input.setStyleSheet(STYLES['line_edit'])
+        form_layout.addRow("🔒 Password:", self.password_input)
         
         form_group.setLayout(form_layout)
         main_layout.addWidget(form_group)
         
-        # Error label (hidden by default)
+        # Error label with modern styling
         self.error_label = QLabel()
-        self.error_label.setStyleSheet("color: red;")
+        self.error_label.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS.get('error', '#F44336')};
+                background-color: {COLORS.get('error', '#F44336')}20;
+                padding: 12px;
+                border-radius: {RADIUS.get('medium', 8)}px;
+                border: 1px solid {COLORS.get('error', '#F44336')};
+            }}
+        """)
         self.error_label.setAlignment(Qt.AlignCenter)
         self.error_label.setWordWrap(True)
         self.error_label.hide()
@@ -100,20 +162,25 @@ class LoginDialog(QDialog):
         
         # Buttons layout
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(10)
+        button_layout.setSpacing(12)
         
-        # Cancel button
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setMinimumHeight(35)
+        # Cancel button with modern styling
+        self.cancel_button = QPushButton("❌ Cancel")
+        self.cancel_button.setMinimumHeight(44)
+        if STYLES.get('button_secondary'):
+            self.cancel_button.setStyleSheet(STYLES['button_secondary'])
         button_layout.addWidget(self.cancel_button)
         
-        # Login button
-        self.login_button = QPushButton("Login")
-        self.login_button.setMinimumHeight(35)
+        # Login button with modern styling
+        self.login_button = QPushButton("🔓 Login")
+        self.login_button.setMinimumHeight(44)
         self.login_button.setDefault(True)
+        if STYLES.get('button_primary'):
+            self.login_button.setStyleSheet(STYLES['button_primary'])
         button_layout.addWidget(self.login_button)
         
         main_layout.addLayout(button_layout)
+        main_layout.addStretch()
         
         # Set the main layout
         self.setLayout(main_layout)

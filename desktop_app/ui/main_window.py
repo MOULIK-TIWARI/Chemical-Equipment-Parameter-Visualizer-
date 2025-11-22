@@ -14,11 +14,20 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal, QThread, pyqtSlot
 from PyQt5.QtGui import QIcon, QFont
 from ui.upload_widget import UploadWidget
-from ui.summary_widget import SummaryWidget
+from ui.summary_widget_enhanced import EnhancedSummaryWidget as SummaryWidget
 from ui.data_table_widget import DataTableWidget
 from ui.chart_widget import ChartWidget
 from ui.history_widget import HistoryWidget
 from services.api_client import NetworkError, AuthenticationError, APIClientError
+
+# Import centralized styles
+try:
+    from ui.styles import STYLES, COLORS, FONTS, RADIUS
+except ImportError:
+    STYLES = {}
+    COLORS = {}
+    FONTS = {}
+    RADIUS = {}
 
 
 class MainWindow(QMainWindow):
@@ -61,11 +70,15 @@ class MainWindow(QMainWindow):
         self._connect_signals()
     
     def _init_ui(self):
-        """Initialize the user interface."""
+        """Initialize the user interface with modern styling."""
         # Set window properties
         self.setWindowTitle("Chemical Equipment Analytics")
         self.setMinimumSize(1000, 700)
         self.resize(1200, 800)
+        
+        # Apply modern window styling
+        if STYLES.get('main_window'):
+            self.setStyleSheet(STYLES['main_window'])
         
         # Create central widget with tab layout
         self.central_widget = QWidget()
@@ -75,10 +88,14 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Create tab widget
+        # Create tab widget with modern styling
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabPosition(QTabWidget.North)
         self.tab_widget.setMovable(False)
+        
+        # Apply tab widget styling
+        if STYLES.get('tab_widget'):
+            self.tab_widget.setStyleSheet(STYLES['tab_widget'])
         
         # Create placeholder tabs (will be replaced with actual widgets in later tasks)
         self._create_placeholder_tabs()
@@ -126,10 +143,12 @@ class MainWindow(QMainWindow):
         
         header_layout.addStretch()
         
-        # Refresh button
-        self.refresh_button = QPushButton("Refresh Data")
-        self.refresh_button.setMaximumWidth(120)
+        # Refresh button with modern styling
+        self.refresh_button = QPushButton("🔄 Refresh Data")
+        self.refresh_button.setMaximumWidth(150)
         self.refresh_button.clicked.connect(self._refresh_dashboard)
+        if STYLES.get('button_secondary'):
+            self.refresh_button.setStyleSheet(STYLES['button_secondary'])
         header_layout.addWidget(self.refresh_button)
         
         main_layout.addLayout(header_layout)
@@ -138,21 +157,25 @@ class MainWindow(QMainWindow):
         self.summary_widget = SummaryWidget()
         main_layout.addWidget(self.summary_widget)
         
-        # Create splitter for table and chart
-        splitter = QSplitter(Qt.Vertical)
+        # Create HORIZONTAL splitter for table and chart to show them side-by-side
+        content_splitter = QSplitter(Qt.Horizontal)
+        content_splitter.setChildrenCollapsible(False)  # Prevent hiding widgets
         
         # Create data table widget
         self.data_table_widget = DataTableWidget()
-        splitter.addWidget(self.data_table_widget)
+        self.data_table_widget.setMinimumWidth(400)  # Ensure table is visible
+        content_splitter.addWidget(self.data_table_widget)
         
         # Create chart widget
         self.chart_widget = ChartWidget()
-        splitter.addWidget(self.chart_widget)
+        self.chart_widget.setMinimumWidth(400)  # Ensure chart is visible
+        self.chart_widget.setMinimumHeight(300)  # Ensure chart has height
+        content_splitter.addWidget(self.chart_widget)
         
-        # Set initial splitter sizes (60% table, 40% chart)
-        splitter.setSizes([600, 400])
+        # Set initial splitter sizes (50% each for equal visibility)
+        content_splitter.setSizes([500, 500])
         
-        main_layout.addWidget(splitter, stretch=1)
+        main_layout.addWidget(content_splitter, stretch=1)
         
         dashboard.setLayout(main_layout)
         return dashboard

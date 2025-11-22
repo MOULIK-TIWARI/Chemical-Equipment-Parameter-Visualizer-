@@ -16,6 +16,16 @@ from PyQt5.QtGui import QFont, QDragEnterEvent, QDropEvent
 import os
 from services.api_client import APIClientError, ValidationError, NetworkError, AuthenticationError
 
+# Import centralized styles
+try:
+    from ui.styles import STYLES, COLORS, FONTS, RADIUS, SPACING
+except ImportError:
+    STYLES = {}
+    COLORS = {'primary': '#2196F3', 'surface': '#FFFFFF'}
+    FONTS = {'size_large': 14}
+    RADIUS = {'large': 12}
+    SPACING = {'lg': 16}
+
 
 class UploadWidget(QWidget):
     """
@@ -52,90 +62,174 @@ class UploadWidget(QWidget):
         self._init_ui()
     
     def _init_ui(self):
-        """Initialize the user interface."""
-        # Main layout
+        """Initialize the user interface with modern, responsive styling."""
+        # Main layout with responsive design
         main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(32, 32, 32, 32)
+        main_layout.setSpacing(24)
         
-        # Title
-        title_label = QLabel("Upload Equipment Data")
-        title_label.setFont(QFont("Arial", 16, QFont.Bold))
+        # Title with modern styling
+        title_label = QLabel("📤 Upload Equipment Data")
+        title_label.setFont(QFont("Segoe UI", FONTS.get('size_title', 18), QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS.get('text_primary', '#212121')};
+                padding: 20px;
+                background-color: {COLORS.get('surface', '#FFFFFF')};
+                border-radius: {RADIUS.get('large', 12)}px;
+                border: 1px solid {COLORS.get('border', '#E0E0E0')};
+            }}
+        """)
         main_layout.addWidget(title_label)
         
-        # Instructions
+        # Instructions with modern styling
         instructions_label = QLabel(
             "Select a CSV file containing equipment data with the following columns:\n"
             "Equipment Name, Type, Flowrate, Pressure, Temperature"
         )
+        instructions_label.setFont(QFont("Segoe UI", FONTS.get('size_medium', 12)))
         instructions_label.setWordWrap(True)
         instructions_label.setAlignment(Qt.AlignCenter)
-        instructions_label.setStyleSheet("color: #666; padding: 10px;")
+        instructions_label.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS.get('text_secondary', '#757575')};
+                padding: 16px;
+                background-color: {COLORS.get('primary_light', '#BBDEFB')}40;
+                border-radius: {RADIUS.get('medium', 8)}px;
+            }}
+        """)
         main_layout.addWidget(instructions_label)
         
-        # File selection group
-        file_group = QGroupBox("File Selection")
+        # File selection group with modern styling
+        file_group = QGroupBox("📁 File Selection")
+        file_group.setStyleSheet(f"""
+            QGroupBox {{
+                background-color: {COLORS.get('surface', '#FFFFFF')};
+                border: 2px solid {COLORS.get('border', '#E0E0E0')};
+                border-radius: {RADIUS.get('large', 12)}px;
+                margin-top: 16px;
+                padding-top: 28px;
+                font-size: {FONTS.get('size_medium', 12)}px;
+                font-weight: 600;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 8px 20px;
+                background-color: {COLORS.get('primary', '#2196F3')};
+                color: white;
+                border-radius: {RADIUS.get('medium', 8)}px;
+                margin-left: 16px;
+            }}
+        """)
         file_layout = QVBoxLayout()
+        file_layout.setContentsMargins(24, 24, 24, 24)
+        file_layout.setSpacing(16)
         
-        # File path display
-        self.file_path_label = QLabel("No file selected")
-        self.file_path_label.setStyleSheet(
-            "padding: 10px; "
-            "background-color: #f5f5f5; "
-            "border: 1px solid #ddd; "
-            "border-radius: 4px;"
-        )
+        # File path display with modern styling
+        self.file_path_label = QLabel("📄 No file selected")
+        self.file_path_label.setFont(QFont("Segoe UI", FONTS.get('size_medium', 12)))
+        self.file_path_label.setStyleSheet(f"""
+            QLabel {{
+                padding: 16px;
+                background-color: {COLORS.get('background', '#F5F5F5')};
+                border: 2px dashed {COLORS.get('border', '#E0E0E0')};
+                border-radius: {RADIUS.get('medium', 8)}px;
+                color: {COLORS.get('text_secondary', '#757575')};
+            }}
+        """)
         self.file_path_label.setWordWrap(True)
+        self.file_path_label.setMinimumHeight(60)
+        self.file_path_label.setAlignment(Qt.AlignCenter)
         file_layout.addWidget(self.file_path_label)
         
-        # Select file button
-        self.select_button = QPushButton("Select CSV File...")
-        self.select_button.setMinimumHeight(40)
+        # Select file button with modern styling
+        self.select_button = QPushButton("📂 Select CSV File...")
+        self.select_button.setMinimumHeight(48)
+        self.select_button.setFont(QFont("Segoe UI", FONTS.get('size_medium', 12), QFont.Bold))
         self.select_button.clicked.connect(self._select_file)
+        if STYLES.get('button_secondary'):
+            self.select_button.setStyleSheet(STYLES['button_secondary'])
         file_layout.addWidget(self.select_button)
         
         file_group.setLayout(file_layout)
         main_layout.addWidget(file_group)
         
-        # Upload button
-        self.upload_button = QPushButton("Upload File")
-        self.upload_button.setMinimumHeight(50)
+        # Upload button with modern styling
+        self.upload_button = QPushButton("⬆️ Upload File")
+        self.upload_button.setMinimumHeight(56)
+        self.upload_button.setFont(QFont("Segoe UI", FONTS.get('size_large', 14), QFont.Bold))
         self.upload_button.setEnabled(False)
-        self.upload_button.setStyleSheet(
-            "QPushButton { "
-            "  background-color: #4CAF50; "
-            "  color: white; "
-            "  font-size: 14px; "
-            "  font-weight: bold; "
-            "  border-radius: 4px; "
-            "} "
-            "QPushButton:hover { "
-            "  background-color: #45a049; "
-            "} "
-            "QPushButton:disabled { "
-            "  background-color: #cccccc; "
-            "  color: #666666; "
-            "}"
-        )
+        if STYLES.get('button_success'):
+            self.upload_button.setStyleSheet(STYLES['button_success'])
+        else:
+            self.upload_button.setStyleSheet(
+                "QPushButton { "
+                "  background-color: #4CAF50; "
+                "  color: white; "
+                "  font-size: 14px; "
+                "  font-weight: bold; "
+                "  border-radius: 8px; "
+                "} "
+                "QPushButton:hover { "
+                "  background-color: #45a049; "
+                "} "
+                "QPushButton:disabled { "
+                "  background-color: #cccccc; "
+                "  color: #666666; "
+                "}"
+            )
         self.upload_button.clicked.connect(self._upload_file)
         main_layout.addWidget(self.upload_button)
         
-        # Status/info area
-        info_group = QGroupBox("Upload Information")
+        # Status/info area with modern styling
+        info_group = QGroupBox("ℹ️ Upload Information")
+        info_group.setStyleSheet(f"""
+            QGroupBox {{
+                background-color: {COLORS.get('surface', '#FFFFFF')};
+                border: 1px solid {COLORS.get('border', '#E0E0E0')};
+                border-radius: {RADIUS.get('large', 12)}px;
+                margin-top: 16px;
+                padding-top: 28px;
+                font-size: {FONTS.get('size_medium', 12)}px;
+                font-weight: 600;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 8px 20px;
+                background-color: {COLORS.get('info', '#2196F3')};
+                color: white;
+                border-radius: {RADIUS.get('medium', 8)}px;
+                margin-left: 16px;
+            }}
+        """)
         info_layout = QVBoxLayout()
+        info_layout.setContentsMargins(20, 20, 20, 20)
         
         self.info_text = QTextEdit()
         self.info_text.setReadOnly(True)
-        self.info_text.setMaximumHeight(150)
+        self.info_text.setMinimumHeight(120)
+        self.info_text.setMaximumHeight(180)
+        self.info_text.setFont(QFont("Segoe UI", FONTS.get('size_normal', 11)))
+        self.info_text.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: {COLORS.get('background', '#F5F5F5')};
+                border: 1px solid {COLORS.get('border', '#E0E0E0')};
+                border-radius: {RADIUS.get('medium', 8)}px;
+                padding: 12px;
+                color: {COLORS.get('text_secondary', '#757575')};
+            }}
+        """)
         self.info_text.setPlainText(
-            "Please select a CSV file to upload.\n\n"
-            "The file must contain the following columns:\n"
-            "- Equipment Name\n"
-            "- Type\n"
-            "- Flowrate (positive number)\n"
-            "- Pressure (positive number)\n"
-            "- Temperature (number)"
+            "📋 File Requirements:\n\n"
+            "• Equipment Name (text)\n"
+            "• Type (text)\n"
+            "• Flowrate (positive number, L/min)\n"
+            "• Pressure (positive number, bar)\n"
+            "• Temperature (number, °C)\n\n"
+            "Click 'Select CSV File' to get started!"
         )
         info_layout.addWidget(self.info_text)
         

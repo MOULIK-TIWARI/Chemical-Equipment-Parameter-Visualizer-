@@ -16,6 +16,16 @@ from PyQt5.QtGui import QFont
 from datetime import datetime
 from services.api_client import APIClientError, NetworkError, AuthenticationError
 
+# Import centralized styles
+try:
+    from ui.styles import STYLES, COLORS, FONTS, RADIUS, SPACING
+except ImportError:
+    STYLES = {}
+    COLORS = {'primary': '#2196F3', 'surface': '#FFFFFF'}
+    FONTS = {'size_large': 14}
+    RADIUS = {'large': 12}
+    SPACING = {'lg': 16}
+
 
 class HistoryWidget(QWidget):
     """
@@ -55,10 +65,19 @@ class HistoryWidget(QWidget):
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(15)
         
-        # Title
-        title_label = QLabel("Dataset History")
-        title_label.setFont(QFont("Arial", 16, QFont.Bold))
+        # Title with modern styling
+        title_label = QLabel("📚 Dataset History")
+        title_label.setFont(QFont("Segoe UI", FONTS.get('size_title', 18), QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS.get('text_primary', '#212121')};
+                padding: 16px;
+                background-color: {COLORS.get('surface', '#FFFFFF')};
+                border-radius: {RADIUS.get('large', 12)}px;
+                border: 1px solid {COLORS.get('border', '#E0E0E0')};
+            }}
+        """)
         main_layout.addWidget(title_label)
         
         # Instructions
@@ -75,10 +94,12 @@ class HistoryWidget(QWidget):
         refresh_layout = QHBoxLayout()
         refresh_layout.addStretch()
         
-        self.refresh_button = QPushButton("Refresh List")
+        self.refresh_button = QPushButton("🔄 Refresh List")
         self.refresh_button.setMinimumHeight(35)
-        self.refresh_button.setMaximumWidth(150)
+        self.refresh_button.setMaximumWidth(160)
         self.refresh_button.clicked.connect(self.load_datasets)
+        if STYLES.get('button_secondary'):
+            self.refresh_button.setStyleSheet(STYLES['button_secondary'])
         refresh_layout.addWidget(self.refresh_button)
         
         main_layout.addLayout(refresh_layout)
@@ -87,51 +108,59 @@ class HistoryWidget(QWidget):
         list_group = QGroupBox("Available Datasets")
         list_layout = QVBoxLayout()
         
-        # Create list widget
+        # Create list widget with modern styling
         self.dataset_list = QListWidget()
         self.dataset_list.setMinimumHeight(300)
-        self.dataset_list.setStyleSheet(
-            "QListWidget { "
-            "  background-color: white; "
-            "  border: 1px solid #ddd; "
-            "  border-radius: 4px; "
-            "  padding: 5px; "
-            "} "
-            "QListWidget::item { "
-            "  padding: 10px; "
-            "  border-bottom: 1px solid #eee; "
-            "} "
-            "QListWidget::item:selected { "
-            "  background-color: #4CAF50; "
-            "  color: white; "
-            "} "
-            "QListWidget::item:hover { "
-            "  background-color: #f0f0f0; "
-            "}"
-        )
+        if STYLES.get('list_widget'):
+            self.dataset_list.setStyleSheet(STYLES['list_widget'])
+        else:
+            self.dataset_list.setStyleSheet(
+                "QListWidget { "
+                "  background-color: white; "
+                "  border: 1px solid #ddd; "
+                "  border-radius: 8px; "
+                "  padding: 8px; "
+                "} "
+                "QListWidget::item { "
+                "  padding: 12px; "
+                "  border-bottom: 1px solid #eee; "
+                "  border-radius: 4px; "
+                "  margin-bottom: 4px; "
+                "} "
+                "QListWidget::item:selected { "
+                "  background-color: #2196F3; "
+                "  color: white; "
+                "} "
+                "QListWidget::item:hover { "
+                "  background-color: #BBDEFB; "
+                "}"
+            )
         self.dataset_list.itemDoubleClicked.connect(self._handle_dataset_double_click)
         list_layout.addWidget(self.dataset_list)
         
-        # Load button
-        self.load_button = QPushButton("Load Selected Dataset")
+        # Load button with modern styling
+        self.load_button = QPushButton("📂 Load Selected Dataset")
         self.load_button.setMinimumHeight(40)
         self.load_button.setEnabled(False)
-        self.load_button.setStyleSheet(
-            "QPushButton { "
-            "  background-color: #2196F3; "
-            "  color: white; "
-            "  font-size: 13px; "
-            "  font-weight: bold; "
-            "  border-radius: 4px; "
-            "} "
-            "QPushButton:hover { "
-            "  background-color: #0b7dda; "
-            "} "
-            "QPushButton:disabled { "
-            "  background-color: #cccccc; "
-            "  color: #666666; "
-            "}"
-        )
+        if STYLES.get('button_primary'):
+            self.load_button.setStyleSheet(STYLES['button_primary'])
+        else:
+            self.load_button.setStyleSheet(
+                "QPushButton { "
+                "  background-color: #2196F3; "
+                "  color: white; "
+                "  font-size: 13px; "
+                "  font-weight: bold; "
+                "  border-radius: 4px; "
+                "} "
+                "QPushButton:hover { "
+                "  background-color: #0b7dda; "
+                "} "
+                "QPushButton:disabled { "
+                "  background-color: #cccccc; "
+                "  color: #666666; "
+                "}"
+            )
         self.load_button.clicked.connect(self._handle_load_button_click)
         list_layout.addWidget(self.load_button)
         

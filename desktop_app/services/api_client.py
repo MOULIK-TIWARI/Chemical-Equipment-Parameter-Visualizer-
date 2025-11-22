@@ -368,7 +368,16 @@ class APIClient:
             include_auth=True
         )
         
-        return response
+        # Handle paginated response - extract results list
+        if isinstance(response, dict) and 'results' in response:
+            return response['results']
+        
+        # If response is already a list, return it as-is
+        if isinstance(response, list):
+            return response
+        
+        # Fallback: return empty list if unexpected format
+        return []
     
     def get_dataset(self, dataset_id: int) -> Dict[str, Any]:
         """

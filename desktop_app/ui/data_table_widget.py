@@ -14,6 +14,15 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from typing import List, Dict, Any, Optional
 
+# Import centralized styles
+try:
+    from ui.styles import STYLES, COLORS, FONTS, RADIUS
+except ImportError:
+    STYLES = {}
+    COLORS = {'primary': '#2196F3'}
+    FONTS = {'size_large': 14}
+    RADIUS = {'medium': 8}
+
 
 class DataTableWidget(QWidget):
     """
@@ -48,32 +57,53 @@ class DataTableWidget(QWidget):
         self._init_ui()
     
     def _init_ui(self):
-        """Initialize the user interface."""
+        """Initialize the user interface with modern styling."""
         # Main layout
         main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(12)
         
         # Header layout with title and record count
         header_layout = QHBoxLayout()
         
-        # Title label
-        title_label = QLabel("Equipment Records")
-        title_label.setFont(QFont("Arial", 12, QFont.Bold))
+        # Title label with modern styling
+        title_label = QLabel("📋 Equipment Records")
+        title_label.setFont(QFont("Segoe UI", FONTS.get('size_large', 14), QFont.Bold))
+        title_label.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS.get('text_primary', '#212121')};
+                padding: 12px;
+                background-color: {COLORS.get('surface', '#FFFFFF')};
+                border-radius: {RADIUS.get('medium', 8)}px;
+                border: 1px solid {COLORS.get('border', '#E0E0E0')};
+            }}
+        """)
         header_layout.addWidget(title_label)
         
         header_layout.addStretch()
         
-        # Record count label
+        # Record count label with modern styling
         self.record_count_label = QLabel("0 records")
-        self.record_count_label.setFont(QFont("Arial", 10))
+        self.record_count_label.setFont(QFont("Segoe UI", FONTS.get('size_medium', 12)))
+        self.record_count_label.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS.get('text_secondary', '#757575')};
+                padding: 8px 16px;
+                background-color: {COLORS.get('primary_light', '#BBDEFB')};
+                border-radius: {RADIUS.get('medium', 8)}px;
+            }}
+        """)
         header_layout.addWidget(self.record_count_label)
         
         main_layout.addLayout(header_layout)
         
-        # Create table widget
+        # Create table widget with modern styling
         self.table = QTableWidget()
         self._setup_table()
+        
+        # Apply table styling
+        if STYLES.get('table'):
+            self.table.setStyleSheet(STYLES['table'])
         
         main_layout.addWidget(self.table)
         

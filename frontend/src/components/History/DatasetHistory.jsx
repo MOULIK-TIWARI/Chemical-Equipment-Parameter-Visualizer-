@@ -25,7 +25,17 @@ function DatasetHistory() {
     try {
       // Fetch list of last 5 datasets
       const response = await api.get('/datasets/')
-      setDatasets(response.data || [])
+      
+      // Handle paginated response - extract results array
+      const data = response.data
+      if (data && typeof data === 'object' && 'results' in data) {
+        setDatasets(data.results || [])
+      } else if (Array.isArray(data)) {
+        setDatasets(data)
+      } else {
+        setDatasets([])
+      }
+      
       setLoading(false)
     } catch (err) {
       const errorMsg = err.message || 'Failed to load dataset history'
