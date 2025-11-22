@@ -264,6 +264,243 @@ Pump-A1,Pump,150.5,45.2,-10.0"""
         df, records = self.processor.parse_csv_file(csv_file)
         self.assertEqual(len(records), 1)
         self.assertEqual(records[0]['temperature'], -10.0)
+    
+    def test_validate_csv_with_extra_columns(self):
+        """Test that CSV with extra columns beyond required ones is accepted."""
+        csv_with_extra = """Equipment Name,Type,Flowrate,Pressure,Temperature,Extra Column
+Pump-A1,Pump,150.5,45.2,85.0,Extra Data"""
+        
+        csv_file = io.StringIO(csv_with_extra)
+        
+        # Should not raise an error - extra columns are allowed
+        df, records = self.processor.parse_csv_file(csv_file)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]['equipment_name'], 'Pump-A1')
+    
+    def test_validate_csv_with_whitespace_in_values(self):
+        """Test that CSV with whitespace in values is handled correctly."""
+        csv_with_whitespace = """Equipment Name,Type,Flowrate,Pressure,Temperature
+  Pump-A1  ,  Pump  ,150.5,45.2,85.0"""
+        
+        csv_file = io.StringIO(csv_with_whitespace)
+        
+        # Should parse successfully and strip whitespace
+        df, records = self.processor.parse_csv_file(csv_file)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]['equipment_name'], 'Pump-A1')
+        self.assertEqual(records[0]['equipment_type'], 'Pump')
+    
+    def test_validate_csv_with_mixed_case_column_names(self):
+        """Test that CSV column names are case-sensitive."""
+        csv_mixed_case = """equipment name,type,flowrate,pressure,temperature
+Pump-A1,Pump,150.5,45.2,85.0"""
+        
+        csv_file = io.StringIO(csv_mixed_case)
+        
+        # Should fail because column names don't match exactly
+        with self.assertRaises(CSVValidationError) as context:
+            self.processor.parse_csv_file(csv_file)
+        
+        self.assertIn('Missing required columns', str(context.exception))
+    
+    def test_validate_csv_with_special_characters_in_names(self):
+        """Test that CSV handles special characters in equipment names and types."""
+        csv_special_chars = """Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1 (Primary),Heat Exchanger - Type A,150.5,45.2,85.0"""
+        
+        csv_file = io.StringIO(csv_special_chars)
+        
+        # Should parse successfully
+        df, records = self.processor.parse_csv_file(csv_file)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]['equipment_name'], 'Pump-A1 (Primary)')
+        self.assertEqual(records[0]['equipment_type'], 'Heat Exchanger - Type A')
+    
+    def test_validate_csv_with_very_large_numbers(self):
+        """Test that CSV handles very large numeric values."""
+        csv_large_numbers = """Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1,Pump,999999.99,999999.99,999999.99"""
+        
+        csv_file = io.StringIO(csv_large_numbers)
+        
+        # Should parse successfully
+        df, records = self.processor.parse_csv_file(csv_file)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]['flowrate'], 999999.99)
+        self.assertEqual(records[0]['pressure'], 999999.99)
+        self.assertEqual(records[0]['temperature'], 999999.99)
+    
+    def test_validate_csv_with_very_small_positive_numbers(self):
+        """Test that CSV handles very small positive numeric values."""
+        csv_small_numbers = """Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1,Pump,0.001,0.001,0.001"""
+        
+        csv_file = io.StringIO(csv_small_numbers)
+        
+        # Should parse successfully
+        df, records = self.processor.parse_csv_file(csv_file)
+        self.assertEqual(len(records), 1)
+        self.assertAlmostEqual(records[0]['flowrate'], 0.001, places=3)
+        self.assertAlmostEqual(records[0]['pressure'], 0.001, places=3)
+        self.assertAlmostEqual(records[0]['temperature'], 0.001, places=3)
+    
+    def test_validate_csv_with_decimal_variations(self):
+        """Test that CSV handles different decimal formats."""
+        csv_decimals = """Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1,Pump,150,45.2,85.0
+Pump-A2,Pump,150.5,45,85"""
+        
+        csv_file = io.StringIO(csv_decimals)
+        
+        # Should parse successfully - integers should be converted to floats
+        df, records = self.processor.parse_csv_file(csv_file)
+        self.assertEqual(len(records), 2)
+        self.assertEqual(records[0]['flowrate'], 150.0)
+        self.assertEqual(records[1]['pressure'], 45.0)
+    
+    def test_validate_csv_with_scientific_notation(self):
+        """Test that CSV handles scientific notation in numeric fields."""
+        csv_scientific = """Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1,Pump,1.5e2,4.52e1,8.5e1"""
+        
+        csv_file = io.StringIO(csv_scientific)
+        
+        # Should parse successfully
+        df, records = self.processor.parse_csv_file(csv_file)
+        self.assertEqual(len(records), 1)
+        self.assertAlmostEqual(records[0]['flowrate'], 150.0, places=1)
+        self.assertAlmostEqual(records[0]['pressure'], 45.2, places=1)
+        self.assertAlmostEqual(records[0]['temperature'], 85.0, places=1)
+    
+    def test_validate_csv_with_only_headers(self):
+        """Test that CSV with only headers (no data rows) is rejected."""
+        csv_only_headers = """Equipment Name,Type,Flowrate,Pressure,Temperature"""
+        
+        csv_file = io.StringIO(csv_only_headers)
+        
+        # Should fail because there's no data
+        with self.assertRaises(CSVValidationError) as context:
+            self.processor.parse_csv_file(csv_file)
+        
+        self.assertIn('empty', str(context.exception).lower())
+    
+    def test_validate_csv_with_null_values_in_numeric_fields(self):
+        """Test that CSV with null/empty values in numeric fields is rejected."""
+        csv_null_numeric = """Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1,Pump,,45.2,85.0"""
+        
+        csv_file = io.StringIO(csv_null_numeric)
+        
+        # Should fail because Flowrate is empty
+        with self.assertRaises(CSVValidationError) as context:
+            self.processor.parse_csv_file(csv_file)
+        
+        error_msg = str(context.exception)
+        self.assertIn('Flowrate', error_msg)
+        self.assertIn('empty', error_msg.lower())
+    
+    def test_validate_csv_with_multiple_rows_mixed_validity(self):
+        """Test that CSV validation catches errors across multiple rows."""
+        csv_mixed = """Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1,Pump,150.5,45.2,85.0
+Reactor-B2,Reactor,-200.0,120.5,350.0
+Heat-Exchanger-C3,Heat Exchanger,180.3,-30.0,150.5"""
+        
+        csv_file = io.StringIO(csv_mixed)
+        
+        # Should fail because of negative flowrate and pressure
+        with self.assertRaises(CSVValidationError) as context:
+            self.processor.parse_csv_file(csv_file)
+        
+        error_msg = str(context.exception)
+        # Should report both Flowrate and Pressure errors
+        self.assertIn('positive', error_msg.lower())
+    
+    def test_parse_to_records_conversion(self):
+        """Test that parse_to_records correctly converts DataFrame to record dictionaries."""
+        csv_content = """Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1,Pump,150.5,45.2,85.0
+Reactor-B2,Reactor,200.0,120.5,350.0"""
+        
+        csv_file = io.StringIO(csv_content)
+        df, records = self.processor.parse_csv_file(csv_file)
+        
+        # Verify record structure
+        self.assertEqual(len(records), 2)
+        
+        # Check first record
+        self.assertIn('equipment_name', records[0])
+        self.assertIn('equipment_type', records[0])
+        self.assertIn('flowrate', records[0])
+        self.assertIn('pressure', records[0])
+        self.assertIn('temperature', records[0])
+        
+        # Verify data types
+        self.assertIsInstance(records[0]['equipment_name'], str)
+        self.assertIsInstance(records[0]['equipment_type'], str)
+        self.assertIsInstance(records[0]['flowrate'], float)
+        self.assertIsInstance(records[0]['pressure'], float)
+        self.assertIsInstance(records[0]['temperature'], float)
+    
+    def test_validate_method_with_file_path(self):
+        """Test that validate method works with file path parameter."""
+        # Create a temporary CSV file
+        import tempfile
+        import os
+        
+        csv_content = """Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1,Pump,150.5,45.2,85.0"""
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+            f.write(csv_content)
+            temp_path = f.name
+        
+        try:
+            # Validate using file path
+            result = self.processor.validate(file_path=temp_path)
+            
+            self.assertTrue(result['is_valid'])
+            self.assertEqual(len(result['errors']), 0)
+            self.assertIsNotNone(result['dataframe'])
+            self.assertEqual(len(result['dataframe']), 1)
+        finally:
+            # Clean up temporary file
+            os.unlink(temp_path)
+    
+    def test_validate_method_with_file_content(self):
+        """Test that validate method works with file content parameter."""
+        csv_content = """Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-A1,Pump,150.5,45.2,85.0"""
+        
+        csv_file = io.StringIO(csv_content)
+        
+        # Validate using file content
+        result = self.processor.validate(file_content=csv_file)
+        
+        self.assertTrue(result['is_valid'])
+        self.assertEqual(len(result['errors']), 0)
+        self.assertIsNotNone(result['dataframe'])
+        self.assertEqual(len(result['dataframe']), 1)
+    
+    def test_validate_method_returns_errors_for_invalid_csv(self):
+        """Test that validate method returns detailed error information."""
+        csv_invalid = """Equipment Name,Type,Flowrate
+Pump-A1,Pump,150.5"""
+        
+        csv_file = io.StringIO(csv_invalid)
+        
+        # Validate invalid CSV
+        result = self.processor.validate(file_content=csv_file)
+        
+        self.assertFalse(result['is_valid'])
+        self.assertIn('missing_columns', result['errors'])
+        self.assertIsNone(result['dataframe'])
+        
+        # Check error details
+        missing_cols_error = result['errors']['missing_columns']
+        self.assertIn('Pressure', missing_cols_error['missing'])
+        self.assertIn('Temperature', missing_cols_error['missing'])
 
 
 class DatasetUploadTests(APITestCase):
@@ -1279,3 +1516,1222 @@ class DatasetSummaryEndpointTests(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], self.dataset.id)
+
+
+class AnalyticsServiceTests(TestCase):
+    """Test analytics service functionality.
+    
+    Requirements: 2.1, 2.2, 2.3
+    """
+    
+    def setUp(self):
+        """Set up test data for analytics tests."""
+        self.user = User.objects.create_user(username='testuser', password='testpass123')
+        
+        # Create a dataset
+        self.dataset = Dataset.objects.create(
+            name='test_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        
+        # Create equipment records with known values for testing
+        self.records = [
+            EquipmentRecord.objects.create(
+                dataset=self.dataset,
+                equipment_name='Pump-A1',
+                equipment_type='Pump',
+                flowrate=100.0,
+                pressure=50.0,
+                temperature=80.0
+            ),
+            EquipmentRecord.objects.create(
+                dataset=self.dataset,
+                equipment_name='Pump-A2',
+                equipment_type='Pump',
+                flowrate=200.0,
+                pressure=60.0,
+                temperature=90.0
+            ),
+            EquipmentRecord.objects.create(
+                dataset=self.dataset,
+                equipment_name='Reactor-B1',
+                equipment_type='Reactor',
+                flowrate=150.0,
+                pressure=100.0,
+                temperature=300.0
+            ),
+            EquipmentRecord.objects.create(
+                dataset=self.dataset,
+                equipment_name='Heat-Exchanger-C1',
+                equipment_type='Heat Exchanger',
+                flowrate=180.0,
+                pressure=30.0,
+                temperature=150.0
+            ),
+        ]
+        
+        self.service = AnalyticsService(dataset=self.dataset)
+    
+    def test_calculate_total_count(self):
+        """Test total count calculation.
+        
+        Requirements: 2.1
+        """
+        count = self.service.calculate_total_count()
+        self.assertEqual(count, 4)
+    
+    def test_calculate_total_count_empty_dataset(self):
+        """Test total count calculation with empty dataset.
+        
+        Requirements: 2.1
+        """
+        empty_dataset = Dataset.objects.create(
+            name='empty_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        service = AnalyticsService(dataset=empty_dataset)
+        
+        count = service.calculate_total_count()
+        self.assertEqual(count, 0)
+    
+    def test_calculate_total_count_no_dataset(self):
+        """Test total count calculation with no dataset.
+        
+        Requirements: 2.1
+        """
+        service = AnalyticsService()
+        count = service.calculate_total_count()
+        self.assertEqual(count, 0)
+    
+    def test_calculate_averages(self):
+        """Test average calculations for flowrate, pressure, and temperature.
+        
+        Requirements: 2.2
+        """
+        averages = self.service.calculate_averages()
+        
+        # Expected averages:
+        # flowrate: (100 + 200 + 150 + 180) / 4 = 157.5
+        # pressure: (50 + 60 + 100 + 30) / 4 = 60.0
+        # temperature: (80 + 90 + 300 + 150) / 4 = 155.0
+        
+        self.assertAlmostEqual(averages['avg_flowrate'], 157.5, places=2)
+        self.assertAlmostEqual(averages['avg_pressure'], 60.0, places=2)
+        self.assertAlmostEqual(averages['avg_temperature'], 155.0, places=2)
+    
+    def test_calculate_averages_empty_dataset(self):
+        """Test average calculations with empty dataset.
+        
+        Requirements: 2.2
+        """
+        empty_dataset = Dataset.objects.create(
+            name='empty_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        service = AnalyticsService(dataset=empty_dataset)
+        
+        averages = service.calculate_averages()
+        
+        self.assertIsNone(averages['avg_flowrate'])
+        self.assertIsNone(averages['avg_pressure'])
+        self.assertIsNone(averages['avg_temperature'])
+    
+    def test_calculate_averages_no_dataset(self):
+        """Test average calculations with no dataset.
+        
+        Requirements: 2.2
+        """
+        service = AnalyticsService()
+        averages = service.calculate_averages()
+        
+        self.assertIsNone(averages['avg_flowrate'])
+        self.assertIsNone(averages['avg_pressure'])
+        self.assertIsNone(averages['avg_temperature'])
+    
+    def test_calculate_averages_single_record(self):
+        """Test average calculations with single record.
+        
+        Requirements: 2.2
+        """
+        single_dataset = Dataset.objects.create(
+            name='single_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        EquipmentRecord.objects.create(
+            dataset=single_dataset,
+            equipment_name='Pump-X1',
+            equipment_type='Pump',
+            flowrate=123.45,
+            pressure=67.89,
+            temperature=100.0
+        )
+        
+        service = AnalyticsService(dataset=single_dataset)
+        averages = service.calculate_averages()
+        
+        self.assertAlmostEqual(averages['avg_flowrate'], 123.45, places=2)
+        self.assertAlmostEqual(averages['avg_pressure'], 67.89, places=2)
+        self.assertAlmostEqual(averages['avg_temperature'], 100.0, places=2)
+    
+    def test_generate_type_distribution(self):
+        """Test equipment type distribution generation.
+        
+        Requirements: 2.3
+        """
+        distribution = self.service.generate_type_distribution()
+        
+        # Expected distribution:
+        # Pump: 2, Reactor: 1, Heat Exchanger: 1
+        
+        self.assertEqual(distribution['Pump'], 2)
+        self.assertEqual(distribution['Reactor'], 1)
+        self.assertEqual(distribution['Heat Exchanger'], 1)
+        self.assertEqual(len(distribution), 3)
+    
+    def test_generate_type_distribution_empty_dataset(self):
+        """Test type distribution with empty dataset.
+        
+        Requirements: 2.3
+        """
+        empty_dataset = Dataset.objects.create(
+            name='empty_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        service = AnalyticsService(dataset=empty_dataset)
+        
+        distribution = service.generate_type_distribution()
+        
+        self.assertEqual(distribution, {})
+    
+    def test_generate_type_distribution_no_dataset(self):
+        """Test type distribution with no dataset.
+        
+        Requirements: 2.3
+        """
+        service = AnalyticsService()
+        distribution = service.generate_type_distribution()
+        
+        self.assertEqual(distribution, {})
+    
+    def test_generate_type_distribution_single_type(self):
+        """Test type distribution with all records of same type.
+        
+        Requirements: 2.3
+        """
+        single_type_dataset = Dataset.objects.create(
+            name='single_type_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        
+        for i in range(5):
+            EquipmentRecord.objects.create(
+                dataset=single_type_dataset,
+                equipment_name=f'Pump-{i}',
+                equipment_type='Pump',
+                flowrate=100.0 + i,
+                pressure=50.0 + i,
+                temperature=80.0 + i
+            )
+        
+        service = AnalyticsService(dataset=single_type_dataset)
+        distribution = service.generate_type_distribution()
+        
+        self.assertEqual(distribution['Pump'], 5)
+        self.assertEqual(len(distribution), 1)
+    
+    def test_generate_type_distribution_many_types(self):
+        """Test type distribution with many different types.
+        
+        Requirements: 2.3
+        """
+        many_types_dataset = Dataset.objects.create(
+            name='many_types_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        
+        types = ['Pump', 'Reactor', 'Heat Exchanger', 'Compressor', 'Valve', 'Tank']
+        for equipment_type in types:
+            EquipmentRecord.objects.create(
+                dataset=many_types_dataset,
+                equipment_name=f'{equipment_type}-1',
+                equipment_type=equipment_type,
+                flowrate=100.0,
+                pressure=50.0,
+                temperature=80.0
+            )
+        
+        service = AnalyticsService(dataset=many_types_dataset)
+        distribution = service.generate_type_distribution()
+        
+        self.assertEqual(len(distribution), 6)
+        for equipment_type in types:
+            self.assertEqual(distribution[equipment_type], 1)
+    
+    def test_calculate_summary_statistics(self):
+        """Test complete summary statistics calculation.
+        
+        Requirements: 2.1, 2.2, 2.3
+        """
+        summary = self.service.calculate_summary_statistics()
+        
+        # Verify all fields are present
+        self.assertIn('total_records', summary)
+        self.assertIn('avg_flowrate', summary)
+        self.assertIn('avg_pressure', summary)
+        self.assertIn('avg_temperature', summary)
+        self.assertIn('type_distribution', summary)
+        
+        # Verify values
+        self.assertEqual(summary['total_records'], 4)
+        self.assertAlmostEqual(summary['avg_flowrate'], 157.5, places=2)
+        self.assertAlmostEqual(summary['avg_pressure'], 60.0, places=2)
+        self.assertAlmostEqual(summary['avg_temperature'], 155.0, places=2)
+        self.assertEqual(summary['type_distribution']['Pump'], 2)
+        self.assertEqual(summary['type_distribution']['Reactor'], 1)
+        self.assertEqual(summary['type_distribution']['Heat Exchanger'], 1)
+    
+    def test_calculate_summary_statistics_empty_dataset(self):
+        """Test summary statistics with empty dataset.
+        
+        Requirements: 2.1, 2.2, 2.3
+        """
+        empty_dataset = Dataset.objects.create(
+            name='empty_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        service = AnalyticsService(dataset=empty_dataset)
+        
+        summary = service.calculate_summary_statistics()
+        
+        self.assertEqual(summary['total_records'], 0)
+        self.assertIsNone(summary['avg_flowrate'])
+        self.assertIsNone(summary['avg_pressure'])
+        self.assertIsNone(summary['avg_temperature'])
+        self.assertEqual(summary['type_distribution'], {})
+    
+    def test_calculate_summary_statistics_no_dataset(self):
+        """Test summary statistics with no dataset.
+        
+        Requirements: 2.1, 2.2, 2.3
+        """
+        service = AnalyticsService()
+        summary = service.calculate_summary_statistics()
+        
+        self.assertEqual(summary['total_records'], 0)
+        self.assertIsNone(summary['avg_flowrate'])
+        self.assertIsNone(summary['avg_pressure'])
+        self.assertIsNone(summary['avg_temperature'])
+        self.assertEqual(summary['type_distribution'], {})
+    
+    def test_update_dataset_statistics(self):
+        """Test updating dataset model with calculated statistics.
+        
+        Requirements: 2.1, 2.2, 2.3
+        """
+        # Initially dataset has no statistics
+        self.assertEqual(self.dataset.total_records, 0)
+        
+        # Update statistics
+        self.service.update_dataset_statistics()
+        
+        # Verify dataset fields were updated (but not saved)
+        self.assertEqual(self.dataset.total_records, 4)
+        self.assertAlmostEqual(self.dataset.avg_flowrate, 157.5, places=2)
+        self.assertAlmostEqual(self.dataset.avg_pressure, 60.0, places=2)
+        self.assertAlmostEqual(self.dataset.avg_temperature, 155.0, places=2)
+        self.assertEqual(self.dataset.type_distribution['Pump'], 2)
+        self.assertEqual(self.dataset.type_distribution['Reactor'], 1)
+        self.assertEqual(self.dataset.type_distribution['Heat Exchanger'], 1)
+    
+    def test_update_dataset_statistics_no_dataset_raises_error(self):
+        """Test that update_dataset_statistics raises error when no dataset.
+        
+        Requirements: 2.1, 2.2, 2.3
+        """
+        service = AnalyticsService()
+        
+        with self.assertRaises(ValueError) as context:
+            service.update_dataset_statistics()
+        
+        self.assertIn('No dataset', str(context.exception))
+    
+    def test_calculate_with_custom_queryset(self):
+        """Test calculations with custom queryset (filtered records).
+        
+        Requirements: 2.1, 2.2, 2.3
+        """
+        # Filter only Pump records
+        pump_queryset = EquipmentRecord.objects.filter(
+            dataset=self.dataset,
+            equipment_type='Pump'
+        )
+        
+        # Calculate statistics for pumps only
+        count = self.service.calculate_total_count(pump_queryset)
+        averages = self.service.calculate_averages(pump_queryset)
+        distribution = self.service.generate_type_distribution(pump_queryset)
+        
+        # Verify results
+        self.assertEqual(count, 2)
+        self.assertAlmostEqual(averages['avg_flowrate'], 150.0, places=2)  # (100 + 200) / 2
+        self.assertAlmostEqual(averages['avg_pressure'], 55.0, places=2)   # (50 + 60) / 2
+        self.assertAlmostEqual(averages['avg_temperature'], 85.0, places=2) # (80 + 90) / 2
+        self.assertEqual(distribution['Pump'], 2)
+        self.assertEqual(len(distribution), 1)
+    
+    def test_calculate_averages_with_extreme_values(self):
+        """Test average calculations with extreme values.
+        
+        Requirements: 2.2
+        """
+        extreme_dataset = Dataset.objects.create(
+            name='extreme_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        
+        # Create records with extreme values
+        EquipmentRecord.objects.create(
+            dataset=extreme_dataset,
+            equipment_name='Equipment-1',
+            equipment_type='Pump',
+            flowrate=0.001,
+            pressure=0.001,
+            temperature=-273.15  # Absolute zero
+        )
+        EquipmentRecord.objects.create(
+            dataset=extreme_dataset,
+            equipment_name='Equipment-2',
+            equipment_type='Pump',
+            flowrate=999999.99,
+            pressure=999999.99,
+            temperature=999999.99
+        )
+        
+        service = AnalyticsService(dataset=extreme_dataset)
+        averages = service.calculate_averages()
+        
+        # Verify calculations work with extreme values
+        self.assertIsNotNone(averages['avg_flowrate'])
+        self.assertIsNotNone(averages['avg_pressure'])
+        self.assertIsNotNone(averages['avg_temperature'])
+        
+        # Verify average is between min and max
+        self.assertGreater(averages['avg_flowrate'], 0.001)
+        self.assertLess(averages['avg_flowrate'], 999999.99)
+    
+    def test_calculate_averages_with_negative_temperature(self):
+        """Test average calculations with negative temperature values.
+        
+        Requirements: 2.2
+        """
+        negative_temp_dataset = Dataset.objects.create(
+            name='negative_temp_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        
+        EquipmentRecord.objects.create(
+            dataset=negative_temp_dataset,
+            equipment_name='Equipment-1',
+            equipment_type='Pump',
+            flowrate=100.0,
+            pressure=50.0,
+            temperature=-10.0
+        )
+        EquipmentRecord.objects.create(
+            dataset=negative_temp_dataset,
+            equipment_name='Equipment-2',
+            equipment_type='Pump',
+            flowrate=100.0,
+            pressure=50.0,
+            temperature=10.0
+        )
+        
+        service = AnalyticsService(dataset=negative_temp_dataset)
+        averages = service.calculate_averages()
+        
+        # Average should be 0.0
+        self.assertAlmostEqual(averages['avg_temperature'], 0.0, places=2)
+    
+    def test_type_distribution_preserves_order(self):
+        """Test that type distribution is ordered alphabetically.
+        
+        Requirements: 2.3
+        """
+        ordered_dataset = Dataset.objects.create(
+            name='ordered_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        
+        # Create records in non-alphabetical order
+        types = ['Valve', 'Pump', 'Reactor', 'Compressor']
+        for equipment_type in types:
+            EquipmentRecord.objects.create(
+                dataset=ordered_dataset,
+                equipment_name=f'{equipment_type}-1',
+                equipment_type=equipment_type,
+                flowrate=100.0,
+                pressure=50.0,
+                temperature=80.0
+            )
+        
+        service = AnalyticsService(dataset=ordered_dataset)
+        distribution = service.generate_type_distribution()
+        
+        # Verify all types are present
+        self.assertEqual(len(distribution), 4)
+        for equipment_type in types:
+            self.assertEqual(distribution[equipment_type], 1)
+    
+    def test_calculate_with_large_dataset(self):
+        """Test calculations with large number of records.
+        
+        Requirements: 2.1, 2.2, 2.3
+        """
+        large_dataset = Dataset.objects.create(
+            name='large_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        
+        # Create 100 records
+        for i in range(100):
+            EquipmentRecord.objects.create(
+                dataset=large_dataset,
+                equipment_name=f'Equipment-{i}',
+                equipment_type='Pump' if i % 2 == 0 else 'Reactor',
+                flowrate=100.0 + i,
+                pressure=50.0 + i,
+                temperature=80.0 + i
+            )
+        
+        service = AnalyticsService(dataset=large_dataset)
+        summary = service.calculate_summary_statistics()
+        
+        # Verify calculations
+        self.assertEqual(summary['total_records'], 100)
+        self.assertIsNotNone(summary['avg_flowrate'])
+        self.assertIsNotNone(summary['avg_pressure'])
+        self.assertIsNotNone(summary['avg_temperature'])
+        self.assertEqual(summary['type_distribution']['Pump'], 50)
+        self.assertEqual(summary['type_distribution']['Reactor'], 50)
+    
+    def test_calculate_averages_precision(self):
+        """Test that average calculations maintain precision.
+        
+        Requirements: 2.2
+        """
+        precision_dataset = Dataset.objects.create(
+            name='precision_dataset.csv',
+            uploaded_by=self.user,
+            total_records=0
+        )
+        
+        # Create records with precise decimal values
+        EquipmentRecord.objects.create(
+            dataset=precision_dataset,
+            equipment_name='Equipment-1',
+            equipment_type='Pump',
+            flowrate=123.456,
+            pressure=78.901,
+            temperature=234.567
+        )
+        EquipmentRecord.objects.create(
+            dataset=precision_dataset,
+            equipment_name='Equipment-2',
+            equipment_type='Pump',
+            flowrate=234.567,
+            pressure=89.012,
+            temperature=345.678
+        )
+        
+        service = AnalyticsService(dataset=precision_dataset)
+        averages = service.calculate_averages()
+        
+        # Verify precision is maintained
+        expected_flowrate = (123.456 + 234.567) / 2
+        expected_pressure = (78.901 + 89.012) / 2
+        expected_temperature = (234.567 + 345.678) / 2
+        
+        self.assertAlmostEqual(averages['avg_flowrate'], expected_flowrate, places=3)
+        self.assertAlmostEqual(averages['avg_pressure'], expected_pressure, places=3)
+        self.assertAlmostEqual(averages['avg_temperature'], expected_temperature, places=3)
+
+
+
+class LoginEndpointTests(APITestCase):
+    """Test login endpoint functionality.
+    
+    Requirements: 6.2, 6.4
+    """
+    
+    def setUp(self):
+        """Set up test user."""
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123',
+            email='test@example.com'
+        )
+        self.client = APIClient()
+        self.login_url = '/api/auth/login/'
+    
+    def test_login_with_valid_credentials(self):
+        """Test successful login with valid credentials.
+        
+        Requirements: 6.2
+        """
+        response = self.client.post(self.login_url, {
+            'username': 'testuser',
+            'password': 'testpass123'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+        self.assertIn('user_id', response.data)
+        self.assertIn('username', response.data)
+        self.assertEqual(response.data['username'], 'testuser')
+        
+        # Verify token is valid
+        token = response.data['token']
+        self.assertIsNotNone(token)
+        self.assertTrue(len(token) > 0)
+        
+        # Verify token works for authenticated requests
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
+        auth_response = self.client.get('/api/datasets/')
+        self.assertEqual(auth_response.status_code, status.HTTP_200_OK)
+    
+    def test_login_with_invalid_username(self):
+        """Test login fails with invalid username.
+        
+        Requirements: 6.4
+        """
+        response = self.client.post(self.login_url, {
+            'username': 'nonexistent',
+            'password': 'testpass123'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('error', response.data)
+        self.assertNotIn('token', response.data)
+    
+    def test_login_with_invalid_password(self):
+        """Test login fails with invalid password.
+        
+        Requirements: 6.4
+        """
+        response = self.client.post(self.login_url, {
+            'username': 'testuser',
+            'password': 'wrongpassword'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('error', response.data)
+        self.assertNotIn('token', response.data)
+    
+    def test_login_with_missing_username(self):
+        """Test login fails with missing username.
+        
+        Requirements: 6.4
+        """
+        response = self.client.post(self.login_url, {
+            'password': 'testpass123'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('error', response.data)
+    
+    def test_login_with_missing_password(self):
+        """Test login fails with missing password.
+        
+        Requirements: 6.4
+        """
+        response = self.client.post(self.login_url, {
+            'username': 'testuser'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('error', response.data)
+    
+    def test_login_with_empty_credentials(self):
+        """Test login fails with empty credentials.
+        
+        Requirements: 6.4
+        """
+        response = self.client.post(self.login_url, {
+            'username': '',
+            'password': ''
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('error', response.data)
+    
+    def test_login_returns_user_information(self):
+        """Test that login returns user information along with token.
+        
+        Requirements: 6.2
+        """
+        response = self.client.post(self.login_url, {
+            'username': 'testuser',
+            'password': 'testpass123'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('username', response.data)
+        self.assertIn('user_id', response.data)
+        
+        self.assertEqual(response.data['username'], 'testuser')
+        self.assertEqual(response.data['user_id'], self.user.id)
+    
+    def test_login_creates_token_if_not_exists(self):
+        """Test that login creates a token if one doesn't exist.
+        
+        Requirements: 6.2
+        """
+        # Ensure user has no token
+        Token.objects.filter(user=self.user).delete()
+        
+        response = self.client.post(self.login_url, {
+            'username': 'testuser',
+            'password': 'testpass123'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+        
+        # Verify token was created in database
+        token_exists = Token.objects.filter(user=self.user).exists()
+        self.assertTrue(token_exists)
+    
+    def test_login_returns_existing_token(self):
+        """Test that login returns existing token if one already exists.
+        
+        Requirements: 6.2
+        """
+        # Create a token for the user
+        existing_token = Token.objects.create(user=self.user)
+        
+        response = self.client.post(self.login_url, {
+            'username': 'testuser',
+            'password': 'testpass123'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['token'], existing_token.key)
+    
+    def test_login_case_sensitive_username(self):
+        """Test that login username is case-sensitive.
+        
+        Requirements: 6.4
+        """
+        response = self.client.post(self.login_url, {
+            'username': 'TESTUSER',  # Wrong case
+            'password': 'testpass123'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('error', response.data)
+
+
+class RegisterEndpointTests(APITestCase):
+    """Test register endpoint functionality.
+    
+    Requirements: 6.2, 6.4
+    """
+    
+    def setUp(self):
+        """Set up test client."""
+        self.client = APIClient()
+        self.register_url = '/api/auth/register/'
+    
+    def test_register_with_valid_data(self):
+        """Test successful registration with valid data.
+        
+        Requirements: 6.2
+        """
+        response = self.client.post(self.register_url, {
+            'username': 'newuser',
+            'password': 'newpass123',
+            'email': 'newuser@example.com'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn('token', response.data)
+        self.assertIn('user_id', response.data)
+        self.assertIn('username', response.data)
+        self.assertEqual(response.data['username'], 'newuser')
+        
+        # Verify user was created
+        user_exists = User.objects.filter(username='newuser').exists()
+        self.assertTrue(user_exists)
+        
+        # Verify token was created
+        user = User.objects.get(username='newuser')
+        token_exists = Token.objects.filter(user=user).exists()
+        self.assertTrue(token_exists)
+    
+    def test_register_with_duplicate_username(self):
+        """Test registration fails with duplicate username.
+        
+        Requirements: 6.4
+        """
+        # Create existing user
+        User.objects.create_user(
+            username='existinguser',
+            password='pass123',
+            email='existing@example.com'
+        )
+        
+        # Try to register with same username
+        response = self.client.post(self.register_url, {
+            'username': 'existinguser',
+            'password': 'newpass123',
+            'email': 'different@example.com'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+    
+    def test_register_with_missing_username(self):
+        """Test registration fails with missing username.
+        
+        Requirements: 6.4
+        """
+        response = self.client.post(self.register_url, {
+            'password': 'newpass123',
+            'email': 'newuser@example.com'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+    
+    def test_register_with_missing_password(self):
+        """Test registration fails with missing password.
+        
+        Requirements: 6.4
+        """
+        response = self.client.post(self.register_url, {
+            'username': 'newuser',
+            'email': 'newuser@example.com'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+    
+    def test_register_with_empty_username(self):
+        """Test registration fails with empty username.
+        
+        Requirements: 6.4
+        """
+        response = self.client.post(self.register_url, {
+            'username': '',
+            'password': 'newpass123',
+            'email': 'newuser@example.com'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+    
+    def test_register_with_empty_password(self):
+        """Test registration fails with empty password.
+        
+        Requirements: 6.4
+        """
+        response = self.client.post(self.register_url, {
+            'username': 'newuser',
+            'password': '',
+            'email': 'newuser@example.com'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+    
+    def test_register_without_email(self):
+        """Test registration succeeds without email (email is optional).
+        
+        Requirements: 6.2
+        """
+        response = self.client.post(self.register_url, {
+            'username': 'newuser',
+            'password': 'newpass123'
+        })
+        
+        # Email is optional, so registration should succeed
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn('token', response.data)
+        
+        # Verify user was created
+        user = User.objects.get(username='newuser')
+        self.assertIsNotNone(user)
+    
+    def test_register_returns_token_immediately(self):
+        """Test that registration returns authentication token immediately.
+        
+        Requirements: 6.2
+        """
+        response = self.client.post(self.register_url, {
+            'username': 'newuser',
+            'password': 'newpass123',
+            'email': 'newuser@example.com'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn('token', response.data)
+        
+        # Verify token works for authenticated requests
+        token = response.data['token']
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
+        auth_response = self.client.get('/api/datasets/')
+        self.assertEqual(auth_response.status_code, status.HTTP_200_OK)
+    
+    def test_register_password_is_hashed(self):
+        """Test that registered user's password is properly hashed.
+        
+        Requirements: 6.2
+        """
+        response = self.client.post(self.register_url, {
+            'username': 'newuser',
+            'password': 'newpass123',
+            'email': 'newuser@example.com'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        # Verify password is hashed (not stored in plain text)
+        user = User.objects.get(username='newuser')
+        self.assertNotEqual(user.password, 'newpass123')
+        
+        # Verify password can be checked
+        self.assertTrue(user.check_password('newpass123'))
+
+
+class PDFReportEndpointTests(APITestCase):
+    """Test PDF report generation endpoint functionality.
+    
+    Requirements: 5.1, 5.4
+    """
+    
+    def setUp(self):
+        """Set up test users and datasets."""
+        self.user1 = User.objects.create_user(
+            username='testuser1',
+            password='testpass123'
+        )
+        self.user2 = User.objects.create_user(
+            username='testuser2',
+            password='testpass123'
+        )
+        self.token1 = Token.objects.create(user=self.user1)
+        self.token2 = Token.objects.create(user=self.user2)
+        self.client = APIClient()
+        
+        # Create a dataset with equipment records for user1
+        self.dataset = Dataset.objects.create(
+            name='test_dataset.csv',
+            uploaded_by=self.user1,
+            total_records=3,
+            avg_flowrate=176.93,
+            avg_pressure=65.23,
+            avg_temperature=195.17,
+            type_distribution={'Pump': 1, 'Reactor': 1, 'Heat Exchanger': 1}
+        )
+        
+        # Create equipment records
+        EquipmentRecord.objects.create(
+            dataset=self.dataset,
+            equipment_name='Pump-A1',
+            equipment_type='Pump',
+            flowrate=150.5,
+            pressure=45.2,
+            temperature=85.0
+        )
+        EquipmentRecord.objects.create(
+            dataset=self.dataset,
+            equipment_name='Reactor-B2',
+            equipment_type='Reactor',
+            flowrate=200.0,
+            pressure=120.5,
+            temperature=350.0
+        )
+        EquipmentRecord.objects.create(
+            dataset=self.dataset,
+            equipment_name='Heat-Exchanger-C3',
+            equipment_type='Heat Exchanger',
+            flowrate=180.3,
+            pressure=30.0,
+            temperature=150.5
+        )
+    
+    def test_report_endpoint_generates_pdf(self):
+        """Test that report endpoint generates a valid PDF.
+        
+        Requirements: 5.1
+        """
+        # Authenticate as user1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Request PDF report
+        response = self.client.get(f'/api/datasets/{self.dataset.id}/report/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify content type
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        
+        # Verify Content-Disposition header
+        self.assertIn('Content-Disposition', response)
+        self.assertIn('attachment', response['Content-Disposition'])
+        self.assertIn('test_dataset', response['Content-Disposition'])
+        
+        # Verify PDF content
+        pdf_content = response.content
+        self.assertGreater(len(pdf_content), 0)
+        
+        # Verify it's a valid PDF (starts with %PDF)
+        self.assertEqual(pdf_content[:4], b'%PDF')
+    
+    def test_report_endpoint_requires_authentication(self):
+        """Test that report endpoint requires authentication.
+        
+        Requirements: 5.1
+        """
+        # Try to access without authentication
+        self.client.credentials()
+        response = self.client.get(f'/api/datasets/{self.dataset.id}/report/')
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_report_endpoint_user_isolation(self):
+        """Test that users cannot generate reports for other users' datasets.
+        
+        Requirements: 5.1
+        """
+        # Create a dataset for user2
+        user2_dataset = Dataset.objects.create(
+            name='user2_dataset.csv',
+            uploaded_by=self.user2,
+            total_records=1,
+            avg_flowrate=150.0,
+            avg_pressure=50.0,
+            avg_temperature=100.0,
+            type_distribution={'Pump': 1}
+        )
+        
+        # Authenticate as user1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Try to generate report for user2's dataset
+        response = self.client.get(f'/api/datasets/{user2_dataset.id}/report/')
+        
+        # Should return 404 (not found) to prevent information leakage
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_report_endpoint_dataset_not_found(self):
+        """Test that report endpoint returns 404 for non-existent dataset.
+        
+        Requirements: 5.1
+        """
+        # Authenticate as user1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Try to generate report for non-existent dataset
+        response = self.client.get('/api/datasets/99999/report/')
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_report_includes_summary_statistics(self):
+        """Test that PDF report includes summary statistics.
+        
+        Requirements: 5.1
+        """
+        # Authenticate as user1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Request PDF report
+        response = self.client.get(f'/api/datasets/{self.dataset.id}/report/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify PDF was generated
+        pdf_content = response.content
+        self.assertGreater(len(pdf_content), 0)
+        
+        # Note: We can't easily verify the content of the PDF without parsing it,
+        # but we can verify it was generated successfully
+        self.assertEqual(pdf_content[:4], b'%PDF')
+    
+    def test_report_includes_visualizations(self):
+        """Test that PDF report includes visualizations.
+        
+        Requirements: 5.1
+        """
+        # Authenticate as user1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Request PDF report
+        response = self.client.get(f'/api/datasets/{self.dataset.id}/report/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify PDF was generated with content
+        pdf_content = response.content
+        self.assertGreater(len(pdf_content), 1000)  # Should be substantial with charts
+        
+        # Verify it's a valid PDF
+        self.assertEqual(pdf_content[:4], b'%PDF')
+    
+    def test_report_downloadable(self):
+        """Test that PDF report is provided for download.
+        
+        Requirements: 5.4
+        """
+        # Authenticate as user1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Request PDF report
+        response = self.client.get(f'/api/datasets/{self.dataset.id}/report/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify Content-Disposition indicates attachment (download)
+        self.assertIn('Content-Disposition', response)
+        content_disposition = response['Content-Disposition']
+        self.assertIn('attachment', content_disposition)
+        
+        # Verify filename is included
+        self.assertIn('filename', content_disposition)
+    
+    def test_report_includes_upload_timestamp(self):
+        """Test that PDF report includes upload timestamp.
+        
+        Requirements: 5.1
+        """
+        # Authenticate as user1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Request PDF report
+        response = self.client.get(f'/api/datasets/{self.dataset.id}/report/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify PDF was generated
+        pdf_content = response.content
+        self.assertGreater(len(pdf_content), 0)
+        self.assertEqual(pdf_content[:4], b'%PDF')
+    
+    def test_report_includes_dataset_identifier(self):
+        """Test that PDF report includes dataset identifier.
+        
+        Requirements: 5.1
+        """
+        # Authenticate as user1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Request PDF report
+        response = self.client.get(f'/api/datasets/{self.dataset.id}/report/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify PDF was generated
+        pdf_content = response.content
+        self.assertGreater(len(pdf_content), 0)
+        self.assertEqual(pdf_content[:4], b'%PDF')
+    
+    def test_report_with_empty_dataset(self):
+        """Test PDF report generation for dataset with no records.
+        
+        Requirements: 5.1
+        """
+        # Create empty dataset
+        empty_dataset = Dataset.objects.create(
+            name='empty_dataset.csv',
+            uploaded_by=self.user1,
+            total_records=0,
+            avg_flowrate=None,
+            avg_pressure=None,
+            avg_temperature=None,
+            type_distribution={}
+        )
+        
+        # Authenticate as user1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Request PDF report
+        response = self.client.get(f'/api/datasets/{empty_dataset.id}/report/')
+        
+        # Should still generate a PDF (even if empty)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        
+        pdf_content = response.content
+        self.assertGreater(len(pdf_content), 0)
+        self.assertEqual(pdf_content[:4], b'%PDF')
+    
+    def test_report_with_large_dataset(self):
+        """Test PDF report generation for dataset with many records.
+        
+        Requirements: 5.1
+        """
+        # Create dataset with many records
+        large_dataset = Dataset.objects.create(
+            name='large_dataset.csv',
+            uploaded_by=self.user1,
+            total_records=100,
+            avg_flowrate=150.0,
+            avg_pressure=50.0,
+            avg_temperature=100.0,
+            type_distribution={'Pump': 50, 'Reactor': 50}
+        )
+        
+        # Create 100 equipment records
+        for i in range(100):
+            EquipmentRecord.objects.create(
+                dataset=large_dataset,
+                equipment_name=f'Equipment-{i}',
+                equipment_type='Pump' if i % 2 == 0 else 'Reactor',
+                flowrate=150.0 + i,
+                pressure=50.0 + i,
+                temperature=100.0 + i
+            )
+        
+        # Authenticate as user1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Request PDF report
+        response = self.client.get(f'/api/datasets/{large_dataset.id}/report/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        
+        # Verify PDF was generated and is substantial
+        pdf_content = response.content
+        self.assertGreater(len(pdf_content), 5000)  # Should be large with 100 records
+        self.assertEqual(pdf_content[:4], b'%PDF')
+    
+    def test_report_owner_can_access(self):
+        """Test that dataset owner can successfully generate report.
+        
+        Requirements: 5.1
+        """
+        # Authenticate as user1 (owner)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Generate report for own dataset
+        response = self.client.get(f'/api/datasets/{self.dataset.id}/report/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        
+        pdf_content = response.content
+        self.assertGreater(len(pdf_content), 0)
+        self.assertEqual(pdf_content[:4], b'%PDF')

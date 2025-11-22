@@ -73,18 +73,41 @@ backend/
 └── README.md                     # This file
 ```
 
-## API Endpoints
+## API Documentation
 
-### Authentication
+For comprehensive API documentation including:
+- Detailed endpoint descriptions
+- Request/response formats
+- Authentication details
+- Error handling
+- Code examples
+
+See **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)**
+
+### Quick Reference - API Endpoints
+
+#### Authentication
 - `POST /api/auth/login/` - User login
 - `POST /api/auth/register/` - User registration
 - `POST /api/auth/logout/` - User logout
 
-### Datasets
+#### Datasets
 - `GET /api/datasets/` - List datasets (last 5)
-- `POST /api/datasets/` - Create dataset
+- `POST /api/datasets/upload/` - Upload CSV file
 - `GET /api/datasets/{id}/` - Retrieve dataset details
+- `GET /api/datasets/{id}/data/` - Get equipment records (paginated)
+- `GET /api/datasets/{id}/summary/` - Get summary statistics
+- `GET /api/datasets/{id}/report/` - Generate PDF report
 - `DELETE /api/datasets/{id}/` - Delete dataset
+
+### Browsable API
+
+Django REST Framework provides an interactive browsable API. Access it by:
+1. Starting the development server: `python manage.py runserver`
+2. Navigating to `http://localhost:8000/api/` in your browser
+3. Logging in with your credentials
+
+The browsable API allows you to explore endpoints, view documentation, and test API calls directly from your browser.
 
 ## Sample Data
 

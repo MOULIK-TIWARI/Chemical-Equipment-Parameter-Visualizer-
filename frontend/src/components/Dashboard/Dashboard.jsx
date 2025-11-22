@@ -7,11 +7,14 @@ import Charts from './Charts'
 import FileUpload from '../Upload/FileUpload'
 import PDFDownload from '../Reports/PDFDownload'
 import { logout } from '../../utils/auth'
+import { useToast } from '../Toast/ToastContainer'
+import FormError from '../FormError/FormError'
 import './Dashboard.css'
 
 function Dashboard() {
   const location = useLocation()
   const navigate = useNavigate()
+  const toast = useToast()
   
   const [dataset, setDataset] = useState(null)
   const [datasetData, setDatasetData] = useState([])
@@ -40,7 +43,9 @@ function Dashboard() {
         await fetchMostRecentDataset()
       }
     } catch (err) {
-      setError(err.message || 'Failed to load dataset')
+      const errorMsg = err.message || 'Failed to load dataset'
+      setError(errorMsg)
+      toast.showError(errorMsg)
       setLoading(false)
     }
   }
@@ -151,11 +156,7 @@ function Dashboard() {
       </div>
 
       {/* Error message */}
-      {error && (
-        <div className="error-banner">
-          {error}
-        </div>
-      )}
+      {error && <FormError error={error} />}
 
       {/* Main content */}
       {dataset ? (

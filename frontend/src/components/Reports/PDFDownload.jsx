@@ -1,14 +1,18 @@
 import { useState } from 'react'
 import api from '../../services/api'
+import { useToast } from '../Toast/ToastContainer'
 import './PDFDownload.css'
 
 function PDFDownload({ datasetId, datasetName }) {
+  const toast = useToast()
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState('')
 
   const handleDownload = async () => {
     if (!datasetId) {
-      setError('No dataset selected')
+      const errorMsg = 'No dataset selected'
+      setError(errorMsg)
+      toast.showError(errorMsg)
       return
     }
 
@@ -41,8 +45,11 @@ function PDFDownload({ datasetId, datasetName }) {
       window.URL.revokeObjectURL(url)
 
       setDownloading(false)
+      toast.showSuccess('PDF report downloaded successfully!')
     } catch (err) {
-      setError(err.message || 'Failed to download PDF report')
+      const errorMsg = err.message || 'Failed to download PDF report'
+      setError(errorMsg)
+      toast.showError(errorMsg)
       setDownloading(false)
     }
   }

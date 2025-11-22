@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import { logout } from '../../utils/auth'
+import { useToast } from '../Toast/ToastContainer'
+import FormError from '../FormError/FormError'
 import './DatasetHistory.css'
 
 function DatasetHistory() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [datasets, setDatasets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -25,7 +28,9 @@ function DatasetHistory() {
       setDatasets(response.data || [])
       setLoading(false)
     } catch (err) {
-      setError(err.message || 'Failed to load dataset history')
+      const errorMsg = err.message || 'Failed to load dataset history'
+      setError(errorMsg)
+      toast.showError(errorMsg)
       setLoading(false)
     }
   }
@@ -68,11 +73,7 @@ function DatasetHistory() {
       </div>
 
       {/* Error message */}
-      {error && (
-        <div className="error-banner">
-          {error}
-        </div>
-      )}
+      {error && <FormError error={error} />}
 
       {/* Dataset list */}
       {datasets.length > 0 ? (

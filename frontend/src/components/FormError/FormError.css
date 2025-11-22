@@ -1,0 +1,47 @@
+.form-error,
+.form-errors {
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+.form-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  background-color: #ffebee;
+  border-left: 4px solid #f44336;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.form-error:last-child {
+  margin-bottom: 0;
+}
+
+.form-error-icon {
+  color: #f44336;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.form-error-message {
+  color: #c62828;
+  font-size: 14px;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.form-error-message strong {
+  text-transform: capitalize;
+  margin-right: 4px;
+}
+
+/* Inline field error variant */
+.form-error.inline {
+  padding: 8px;
+  font-size: 13px;
+  margin-top: 4px;
+  margin-bottom: 0;
+}

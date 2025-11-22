@@ -1,0 +1,99 @@
+.error-boundary-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 20px;
+}
+
+.error-boundary-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  max-width: 600px;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.error-boundary-card h2 {
+  color: #d32f2f;
+  margin-bottom: 16px;
+  font-size: 24px;
+}
+
+.error-message {
+  color: #666;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.error-details {
+  text-align: left;
+  margin: 24px 0;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.error-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.error-stack {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 12px;
+  color: #d32f2f;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.error-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.error-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.error-button.primary {
+  background-color: #1976d2;
+  color: white;
+}
+
+.error-button.primary:hover {
+  background-color: #1565c0;
+}
+
+.error-button.secondary {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.error-button.secondary:hover {
+  background-color: #e0e0e0;
+}

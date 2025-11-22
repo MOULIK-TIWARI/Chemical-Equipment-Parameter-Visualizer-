@@ -459,98 +459,185 @@
 
 - [ ] 16. Set up PyQt5 desktop application project
 
-  - [ ] 16.1 Create desktop application structure
+  - [x] 16.1 Create desktop application structure
+
+
+
+
+
+
+
+
     - Set up main.py entry point
     - Create ui, services, and utils directories
     - Create requirements.txt with PyQt5, matplotlib, requests
     - _Requirements: 3.3, 3.4_
-  - [ ] 16.2 Create API client service
+  - [x] 16.2 Create API client service
+
+
+
+
     - Implement requests-based API client class
     - Add methods for all API endpoints
     - Handle authentication token storage
     - Add error handling for network issues
     - _Requirements: 1.2, 2.5, 4.4, 5.2_
-  - [ ] 16.3 Create configuration management
+  - [x] 16.3 Create configuration management
+
+
+
+
+
     - Create config file for API base URL
     - Add settings for default values
     - _Requirements: 1.2_
 
-- [ ] 17. Implement PyQt5 authentication dialog
+- [x] 17. Implement PyQt5 authentication dialog
 
-  - [ ] 17.1 Create LoginDialog class
+
+
+  - [x] 17.1 Create LoginDialog class
+
+
+
+
+
     - Build QDialog with username and password fields
     - Add login button and form validation
     - _Requirements: 6.3_
-  - [ ] 17.2 Implement login logic
+  - [x] 17.2 Implement login logic
+
+
+
     - Call authentication API endpoint
     - Store token in API client
     - Close dialog on success
     - Show error message on failure
     - _Requirements: 6.3, 6.4_
 
-- [ ] 18. Implement PyQt5 main window
+- [x] 18. Implement PyQt5 main window
 
-  - [ ] 18.1 Create MainWindow class
+
+
+
+  - [x] 18.1 Create MainWindow class
+
+
+
     - Set up QMainWindow with menu bar
     - Create central widget with tab or stacked layout
     - Add menu items for upload, history, logout
     - _Requirements: 3.3, 3.4_
-  - [ ] 18.2 Implement window initialization
+  - [x] 18.2 Implement window initialization
+
+
+
     - Show login dialog on startup
     - Initialize main window after successful login
     - Set window title and size
     - _Requirements: 6.3_
 
-- [ ] 19. Implement PyQt5 file upload widget
+- [x] 19. Implement PyQt5 file upload widget
 
-  - [ ] 19.1 Create UploadWidget class
+
+
+
+
+
+  - [x] 19.1 Create UploadWidget class
+
+
+
     - Add file selection button using QFileDialog
     - Filter for CSV files only
     - Add upload button
     - _Requirements: 1.2, 1.3_
-  - [ ] 19.2 Implement upload functionality
+  - [x] 19.2 Implement upload functionality
+
+
     - Read selected file
     - Call upload API endpoint via API client
     - Show progress dialog during upload
     - Display success or error message
     - _Requirements: 1.2, 1.4_
-  - [ ] 19.3 Handle upload completion
+  - [x] 19.3 Handle upload completion
+
+
     - Refresh dashboard with new dataset
     - Switch to dashboard view
     - _Requirements: 1.2_
 
-- [ ] 20. Implement PyQt5 dashboard widgets
+- [x] 20. Implement PyQt5 dashboard widgets
 
-  - [ ] 20.1 Create SummaryWidget class
+
+
+
+  - [x] 20.1 Create SummaryWidget class
+
+
+
+
+
     - Use QGroupBox with QLabel elements
     - Display total count and averages
     - Format numbers with appropriate precision
     - _Requirements: 2.5, 3.4_
-  - [ ] 20.2 Create DataTableWidget class
+  - [x] 20.2 Create DataTableWidget class
+
+
+
+
+
     - Use QTableWidget to display equipment records
     - Set column headers
     - Populate rows with data
     - Add sorting capability
     - _Requirements: 3.3_
-  - [ ] 20.3 Create ChartWidget class using Matplotlib
+  - [x] 20.3 Create ChartWidget class using Matplotlib
+
+
+
+
+
+
+
+
+
+
     - Embed matplotlib FigureCanvas in QWidget
     - Create bar chart for type distribution
     - Add chart toolbar for interaction
     - _Requirements: 3.4_
-  - [ ] 20.4 Integrate widgets into main window
+  - [x] 20.4 Integrate widgets into main window
+
+
+
+
     - Add all widgets to dashboard layout
     - Connect data loading to API calls
     - Implement refresh functionality
     - _Requirements: 3.3, 3.4_
 
-- [ ] 21. Implement PyQt5 dataset history widget
+- [x] 21. Implement PyQt5 dataset history widget
 
-  - [ ] 21.1 Create HistoryWidget class
+
+
+
+  - [x] 21.1 Create HistoryWidget class
+
+
+
+
+
     - Use QListWidget to display datasets
     - Fetch dataset list from API
     - Show dataset name and upload date
     - _Requirements: 4.4_
-  - [ ] 21.2 Add dataset selection handling
+  - [x] 21.2 Add dataset selection handling
+
+
+
+
     - Connect item click signal to slot
     - Load selected dataset data
     - Update dashboard widgets with selected data
@@ -558,10 +645,23 @@
 
 - [ ] 22. Implement PyQt5 PDF download functionality
 
-  - [ ] 22.1 Add PDF download action to menu
+  - [x] 22.1 Add PDF download action to menu
+
+
+
+
+
     - Create menu item or button for report generation
     - _Requirements: 5.2_
-  - [ ] 22.2 Implement PDF download logic
+  - [x] 22.2 Implement PDF download logic
+
+
+
+
+
+
+
+
     - Call report API endpoint
     - Save PDF file using QFileDialog
     - Show progress dialog during generation
@@ -570,12 +670,26 @@
 
 - [ ] 23. Add error handling and user feedback
 
-  - [ ] 23.1 Implement error handling in React app
+  - [x] 23.1 Implement error handling in React app
+
+
+
+
+
+
+
+
+
     - Create error boundary component
     - Add toast notifications for errors
     - Display validation errors in forms
     - _Requirements: 1.4, 6.4_
-  - [ ] 23.2 Implement error handling in PyQt5 app
+  - [x] 23.2 Implement error handling in PyQt5 app
+
+
+
+
+
     - Use QMessageBox for error dialogs
     - Add status bar messages
     - Handle network errors gracefully
@@ -583,67 +697,123 @@
 
 - [ ] 24. Configure CORS for development
 
-  - [ ] 24.1 Install and configure django-cors-headers
+  - [x] 24.1 Install and configure django-cors-headers
+
+
+
+
+
     - Add to installed apps
     - Configure allowed origins for React dev server
     - Set CORS headers in settings
     - _Requirements: 1.1, 2.4_
 
-- [ ]\* 25. Write backend unit tests
+- [ ] 25. Write backend unit tests
 
-  - [ ]\* 25.1 Write tests for CSV processing
+
+  - [x] 25.1 Write tests for CSV processing
+
+
+
+
+
     - Test valid CSV parsing
     - Test invalid CSV handling
     - Test data validation
     - _Requirements: 1.3, 1.4, 1.5_
-  - [ ]\* 25.2 Write tests for analytics service
+  - [x] 25.2 Write tests for analytics service
+
+
+
+
+
+
     - Test summary calculations
     - Test type distribution
     - Test edge cases
     - _Requirements: 2.1, 2.2, 2.3_
-  - [ ]\* 25.3 Write tests for API endpoints
+  - [x] 25.3 Write tests for API endpoints
+
+
+
+
+
+
     - Test authentication flow
     - Test upload endpoint
     - Test retrieval endpoints
     - Test PDF generation
     - _Requirements: 1.1, 2.4, 4.3, 5.1, 6.2_
 
-- [ ]\* 26. Create documentation
+- [ ] 26. Create documentation
 
-  - [ ]\* 26.1 Write README.md
+
+  - [x] 26.1 Write README.md
+
+
+
+
+
     - Add project overview
     - Include setup instructions for backend
     - Include setup instructions for React frontend
     - Include setup instructions for PyQt5 desktop app
     - Document API endpoints
     - _Requirements: 7.1_
-  - [ ]\* 26.2 Add code comments and docstrings
+  - [x] 26.2 Add code comments and docstrings
+
+
+
+
+
+
     - Document all service classes
     - Add docstrings to API views
     - Comment complex logic
     - _Requirements: All_
-  - [ ]\* 26.3 Create API documentation
+  - [x] 26.3 Create API documentation
+
+
+
+
+
     - Use Django REST Framework browsable API
     - Add endpoint descriptions
     - Document request/response formats
     - _Requirements: 1.1, 2.4, 4.3, 5.1_
 
-- [ ] 27. Final integration and testing
-  - [ ] 27.1 Test complete workflow in React web app
+- [x] 27. Final integration and testing
+
+
+  - [x] 27.1 Test complete workflow in React web app
+
+
+
+
+
     - Test login flow
     - Test CSV upload with sample data
     - Verify dashboard displays correctly
     - Test history navigation
     - Test PDF download
     - _Requirements: All_
-  - [ ] 27.2 Test complete workflow in PyQt5 desktop app
+  - [x] 27.2 Test complete workflow in PyQt5 desktop app
+
+
+
+
+
     - Test login flow
     - Test CSV upload with sample data
     - Verify dashboard displays correctly
     - Test history navigation
     - Test PDF download
     - _Requirements: All_
-  - [ ] 27.3 Verify both frontends work with same backend
+  - [x] 27.3 Verify both frontends work with same backend
+
+
+
+
     - Upload from web, view in desktop
     - Upload from desktop, view in web
     - Verify data consistency
