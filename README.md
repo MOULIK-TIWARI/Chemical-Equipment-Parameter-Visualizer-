@@ -84,7 +84,7 @@ python manage.py createsuperuser
 
 6. Available Superusers ( Use any of these two users for login access):
 ```bash
-python manage.py createsuperuser
+
 1. username: JOHN
    password: JOHN@123
 
