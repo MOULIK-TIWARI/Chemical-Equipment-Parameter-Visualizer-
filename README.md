@@ -164,17 +164,18 @@ The application expects CSV files with the following columns:
 
 ```csv
 Equipment Name,Type,Flowrate,Pressure,Temperature
+Examples include:
 Pump-A1,Pump,150.5,45.2,85.0
 Reactor-B2,Reactor,200.0,120.5,350.0
 Heat-Exchanger-C3,Heat Exchanger,180.3,30.0,150.5
 ```
 
 **Column Requirements:**
-- **Equipment Name**: Non-empty string
-- **Type**: Non-empty string (e.g., Pump, Reactor, Heat Exchanger, Compressor)
-- **Flowrate**: Positive float (units: L/min)
-- **Pressure**: Positive float (units: bar)
-- **Temperature**: Float (units: °C)
+- **Equipment Name**
+- **Type** (e.g., Pump, Reactor, Heat Exchanger, Compressor)
+- **Flowrate** (units: L/min)
+- **Pressure** (units: bar)
+- **Temperature** (units: °C)
 
 A sample CSV file is provided at `backend/sample_equipment_data.csv`
 
