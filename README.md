@@ -77,12 +77,22 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
-5. Create a superuser (optional, for admin access):
+5. Create a superuser ( for admin access):
 ```bash
 python manage.py createsuperuser
 ```
 
-6. Start the development server:
+6. Available Superusers ( Use any of these two users for login access):
+```bash
+python manage.py createsuperuser
+1. username: JOHN
+   password: JOHN@123
+
+2. username: JANE
+   password: JANE@123
+```
+
+7. Start the development server:
 ```bash
 python manage.py runserver
 ```
